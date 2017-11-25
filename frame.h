@@ -5,6 +5,13 @@
 #include <vector>
 namespace knt {
 
+enum {
+    NUM_DOF_FRAME = 0,
+    NUM_DOF_REVOLUTE = 1,
+    NUM_DOF_PRISMATIC = 1,
+    NUM_DOF_FRAME6DOF = 6
+};
+
 bool CheckSO3(const Eigen::MatrixXd& R)
 {
     static double eps = 1e-3;
@@ -63,27 +70,61 @@ public:
         next_frames_.push_back(next);
     }
 
-    virtual int DoFSize() const { return 0; }
+    virtual int DoFSize() const { return NUM_DOF_FRAME; }
+
+    virtual Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const
+    {
+        return Eigen::MatrixXd();
+    }
+
     virtual Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const
     {
         return Eigen::MatrixXd();
     }
-    virtual void Oplus(const Eigen::MatrixXd& update) const {}
+    virtual void Oplus(const Eigen::VectorXd& update)
+    {
+    }
 
-private:
+protected:
     Eigen::MatrixXd Tf_1_f_;
     std::vector<Frame*> next_frames_;
 };
 
 class Frame6DoF : public Frame {
 public:
-    Frame6DoF();
-    Frame6DoF(const Eigen::MatrixXd& Tf_1_f);
-    ~Frame6DoF();
+    Frame6DoF()
+    {
+        Tf_1_f_ = Eigen::MatrixXd::Identity(4, 4);
+    }
+    Frame6DoF(const Eigen::MatrixXd& Tf_1_f)
+    {
+        if (CheckSE3(Tf_1_f))
+            throw std::runtime_error("input matrix is not SE(3)");
+        Tf_1_f_ = Tf_1_f;
+    }
+    ~Frame6DoF() {}
 
-    int DoFSize() const override;
-    Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override;
-    void Oplus(const Eigen::MatrixXd& update) const override;
+    int DoFSize() const override
+    {
+        return NUM_DOF_FRAME6DOF;
+    }
+
+    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override;
+
+    Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override
+    {
+    }
+
+    void Oplus(const Eigen::VectorXd& update) override
+    {
+        Eigen::VectorXd rvec = update.tail(3);
+        double th = rvec.norm();
+        rvec /= th;
+        Eigen::MatrixXd Tffp = Eigen::MatrixXd::Identity(4, 4);
+        Tffp.block<3, 3>(0, 0) = Eigen::AngleAxisd(th, rvec).toRotationMatrix();
+        Tffp.block<3, 1>(0, 3) = update.head(3);
+        Tf_1_f_ = Tf_1_f_.eval() * Tffp;
+    }
 
 private:
 };
@@ -94,8 +135,9 @@ public:
     ~RevoluteJoint();
 
     int DoFSize() const override;
+    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override;
     Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override;
-    void Oplus(const Eigen::MatrixXd& update) const override;
+    void Oplus(const Eigen::VectorXd& update) override;
 
 private:
 };
@@ -106,8 +148,9 @@ public:
     ~PrismaticJoint();
 
     int DoFSize() const override;
+    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override;
     Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override;
-    void Oplus(const Eigen::MatrixXd& update) const override;
+    void Oplus(const Eigen::VectorXd& update) override;
 
 private:
 };
