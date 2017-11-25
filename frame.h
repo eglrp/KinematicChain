@@ -86,6 +86,7 @@ public:
     }
 
 protected:
+    Eigen::MatrixXd Twf_;
     Eigen::MatrixXd Tf_1_f_;
     std::vector<Frame*> next_frames_;
 };
@@ -109,10 +110,36 @@ public:
         return NUM_DOF_FRAME6DOF;
     }
 
-    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override;
+    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override
+    {
+        Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, NUM_DOF_FRAME6DOF);
+        J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 0);
+        J.block<3, 1>(0, 1) = Twf_.block<3, 1>(0, 1);
+        J.block<3, 1>(0, 2) = Twf_.block<3, 1>(0, 2);
+        Eigen::MatrixXd r = tvec_wt - Twf_.block<3, 1>(0, 3);
+        J.block<3, 1>(0, 3) = Twf_.block<3, 1>(0, 0).cross(r);
+        J.block<3, 1>(0, 4) = Twf_.block<3, 1>(0, 1).cross(r);
+        J.block<3, 1>(0, 5) = Twf_.block<3, 1>(0, 2).cross(r);
+
+        return J;
+    }
 
     Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override
     {
+        Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, NUM_DOF_FRAME6DOF);
+        J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 0);
+        J.block<3, 1>(0, 1) = Twf_.block<3, 1>(0, 1);
+        J.block<3, 1>(0, 2) = Twf_.block<3, 1>(0, 2);
+        Eigen::MatrixXd r = Twt.block<3, 1>(0, 3) - Twf_.block<3, 1>(0, 3);
+        J.block<3, 1>(0, 3) = Twf_.block<3, 1>(0, 0).cross(r);
+        J.block<3, 1>(0, 4) = Twf_.block<3, 1>(0, 1).cross(r);
+        J.block<3, 1>(0, 5) = Twf_.block<3, 1>(0, 2).cross(r);
+
+        J.block<3, 1>(3, 3) = Twf_.block<3, 1>(0, 0);
+        J.block<3, 1>(3, 4) = Twf_.block<3, 1>(0, 1);
+        J.block<3, 1>(3, 5) = Twf_.block<3, 1>(0, 2);
+
+        return J;
     }
 
     void Oplus(const Eigen::VectorXd& update) override
@@ -134,9 +161,28 @@ public:
     RevoluteJoint();
     ~RevoluteJoint();
 
-    int DoFSize() const override;
-    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override;
-    Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override;
+    int DoFSize() const override
+    {
+        return NUM_DOF_REVOLUTE;
+    }
+
+    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override
+    {
+        Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, NUM_DOF_REVOLUTE);
+        Eigen::MatrixXd r = tvec_wt - Twf_.block<3, 1>(0, 3);
+        J = Twf_.block<3, 1>(0, 2).cross(r);
+        return J;
+    }
+
+    Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override
+    {
+        Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, NUM_DOF_REVOLUTE);
+        Eigen::MatrixXd r = Twt - Twf_.block<3, 1>(0, 3);
+        J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 2).cross(r);
+        J.block<3, 1>(3, 0) = Twf_.block<3, 1>(0, 2);
+        return J;
+    }
+
     void Oplus(const Eigen::VectorXd& update) override;
 
 private:
@@ -147,9 +193,25 @@ public:
     PrismaticJoint();
     ~PrismaticJoint();
 
-    int DoFSize() const override;
-    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override;
-    Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override;
+    int DoFSize() const override
+    {
+        return NUM_DOF_PRISMATIC;
+    }
+
+    Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override
+    {
+        Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, NUM_DOF_PRISMATIC);
+        J = Twf_.block<3, 1>(0, 2);
+        return J;
+    }
+
+    Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override
+    {
+        Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, NUM_DOF_PRISMATIC);
+        J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 2);
+        return J;
+    }
+
     void Oplus(const Eigen::VectorXd& update) override;
 
 private:
