@@ -1,6 +1,7 @@
 #ifndef FRAME_H
 #define FRAME_H
 #include <Eigen/Dense>
+#include <cmath>
 #include <exception>
 #include <vector>
 namespace knt {
@@ -57,12 +58,14 @@ public:
     Frame()
     {
         Tf_1_f_ = Eigen::MatrixXd::Identity(4, 4);
+        need_update_Twf_ = true;
     }
     Frame(const Eigen::MatrixXd& Tf_1_f)
     {
         if (CheckSE3(Tf_1_f))
             throw std::runtime_error("input matrix is not SE(3)");
         Tf_1_f_ = Tf_1_f;
+        need_update_Twf_ = true;
     }
     virtual ~Frame() {}
 
@@ -90,6 +93,7 @@ protected:
     Eigen::MatrixXd Twf_;
     Eigen::MatrixXd Tf_1_f_;
     std::vector<Frame*> next_frames_;
+    bool need_update_Twf_;
 };
 
 class Frame6DoF : public Frame {
@@ -97,6 +101,7 @@ public:
     Frame6DoF()
     {
         Tf_1_f_ = Eigen::MatrixXd::Identity(4, 4);
+        need_update_Twf_ = true;
     }
 
     Frame6DoF(const Eigen::MatrixXd& Tf_1_f)
@@ -104,6 +109,7 @@ public:
         if (CheckSE3(Tf_1_f))
             throw std::runtime_error("input matrix is not SE(3)");
         Tf_1_f_ = Tf_1_f;
+        need_update_Twf_ = true;
     }
 
     ~Frame6DoF() {}
@@ -162,8 +168,19 @@ private:
 class RevoluteJoint : public Frame {
 public:
     RevoluteJoint(double a, double alpha, double d, double theta,
-        double joint_limit_min, double joint_limit_max);
-    ~RevoluteJoint();
+        double joint_limit_min, double joint_limit_max)
+    {
+        a_ = a;
+        alpha_ = alpha;
+        d_ = d;
+        theta_ = theta;
+        joint_limit_min_ = joint_limit_min;
+        joint_limit_max_ = joint_limit_max;
+        input_ = 0.0f;
+    }
+    ~RevoluteJoint()
+    {
+    }
 
     int DoFSize() const override
     {
@@ -193,6 +210,34 @@ public:
     }
 
 private:
+    void UpdateTf_1_f()
+    {
+        double theta = theta_ + input_;
+        double cos_theta = cos(theta);
+        double sin_theta = sin(theta);
+        double cos_alpha = cos(alpha_);
+        double sin_alpha = sin(alpha_);
+
+        /*
+         * T = [ c_th -s_t*c_a  s_t*s_a a*c_t
+         *       s_th  c_t*c_a -c_t*s_a a*s_t
+         *          0      s_a      c_a     d
+         *          0        0        0     1]
+         */
+
+        Tf_1_f_(0, 0) = cos_theta;
+        Tf_1_f_(1, 0) = sin_theta;
+        Tf_1_f_(0, 1) = -sin_theta * cos_alpha;
+        Tf_1_f_(1, 1) = cos_theta * cos_alpha;
+        Tf_1_f_(2, 1) = sin_alpha;
+        Tf_1_f_(0, 2) = sin_theta * sin_alpha;
+        Tf_1_f_(1, 2) = -cos_theta * sin_alpha;
+        Tf_1_f_(2, 2) = cos_alpha;
+        Tf_1_f_(0, 3) = a_ * cos_theta;
+        Tf_1_f_(1, 3) = a_ * sin_theta;
+        Tf_1_f_(2, 3) = d_;
+    }
+
     double a_, alpha_, d_, theta_;
     double joint_limit_min_, joint_limit_max_, input_;
 };
@@ -228,6 +273,34 @@ public:
     }
 
 private:
+    void UpdateTf_1_f()
+    {
+        double d = d_ + input_;
+        double cos_theta = cos(theta_);
+        double sin_theta = sin(theta_);
+        double cos_alpha = cos(alpha_);
+        double sin_alpha = sin(alpha_);
+
+        /*
+         * T = [ c_th -s_t*c_a  s_t*s_a a*c_t
+         *       s_th  c_t*c_a -c_t*s_a a*s_t
+         *          0      s_a      c_a     d
+         *          0        0        0     1]
+         */
+
+        Tf_1_f_(0, 0) = cos_theta;
+        Tf_1_f_(1, 0) = sin_theta;
+        Tf_1_f_(0, 1) = -sin_theta * cos_alpha;
+        Tf_1_f_(1, 1) = cos_theta * cos_alpha;
+        Tf_1_f_(2, 1) = sin_alpha;
+        Tf_1_f_(0, 2) = sin_theta * sin_alpha;
+        Tf_1_f_(1, 2) = -cos_theta * sin_alpha;
+        Tf_1_f_(2, 2) = cos_alpha;
+        Tf_1_f_(0, 3) = a_ * cos_theta;
+        Tf_1_f_(1, 3) = a_ * sin_theta;
+        Tf_1_f_(2, 3) = d;
+    }
+
     double a_, alpha_, d_, theta_;
     double joint_limit_min_, joint_limit_max_, input_;
 };
