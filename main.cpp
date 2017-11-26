@@ -5,9 +5,9 @@ using namespace std;
 
 int main()
 {
-    Eigen::MatrixXd A;
-    A = Eigen::AngleAxisd(M_PI / 3, Eigen::Vector3d::UnitX()).toRotationMatrix();
-    std::cout << knt::CheckSO3(A) << std::endl;
-
+    knt::Frame f;
+    knt::Frame6DoF ff;
+    knt::RevoluteJoint r(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    knt::PrismaticJoint p(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     return 0;
 }
