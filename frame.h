@@ -98,6 +98,10 @@ public:
                 frame->Update(Twf_, update_flag);
             }
         } else {
+
+            if (need_update_Twf_)
+                Twf_ = Twf_1 * Tf_1_f_;
+
             for (auto& frame : next_frames_) {
                 frame->Update(Twf_, need_update_Twf_);
             }

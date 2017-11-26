@@ -3,13 +3,20 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += main.cpp
-
-unix: CONFIG += link_pkgconfig
-unix: PKGCONFIG += eigen3
+SOURCES += main.cpp \
+    viewer.cpp
 
 HEADERS += \
     frame.h \
-    kinematicchain.h
+    kinematicchain.h \
+    viewer.h
 
+#eigen3
+unix: CONFIG += link_pkgconfig
+unix: PKGCONFIG += eigen3
+
+#opencv
 unix: PKGCONFIG += opencv
+
+#pangolin
+LIBS += -lpangolin -lGL
