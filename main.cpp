@@ -1,4 +1,6 @@
 #include "frame.h"
+#include "tracer.h"
+#include "viewer.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <vector>
@@ -24,6 +26,8 @@ int main()
     }
     Eigen::MatrixXd Tww = Eigen::MatrixXd::Identity(4, 4);
     robot[0]->Update(Tww, false);
+
+    Viewer::GetInstance().Run();
 
     return 0;
 }

@@ -4,12 +4,14 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    viewer.cpp
+    viewer.cpp \
+    tracer.cpp
 
 HEADERS += \
     frame.h \
     kinematicchain.h \
-    viewer.h
+    viewer.h \
+    tracer.h
 
 #eigen3
 unix: CONFIG += link_pkgconfig
@@ -19,4 +21,4 @@ unix: PKGCONFIG += eigen3
 unix: PKGCONFIG += opencv
 
 #pangolin
-LIBS += -lpangolin -lGL
+LIBS += -lpangolin -lGL -lglut
