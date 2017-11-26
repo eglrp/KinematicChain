@@ -65,6 +65,7 @@ public:
         Tf_1_f_ = Tf_1_f;
     }
     virtual ~Frame() {}
+
     void AddNextFrame(Frame* next)
     {
         next_frames_.push_back(next);
@@ -97,12 +98,14 @@ public:
     {
         Tf_1_f_ = Eigen::MatrixXd::Identity(4, 4);
     }
+
     Frame6DoF(const Eigen::MatrixXd& Tf_1_f)
     {
         if (CheckSE3(Tf_1_f))
             throw std::runtime_error("input matrix is not SE(3)");
         Tf_1_f_ = Tf_1_f;
     }
+
     ~Frame6DoF() {}
 
     int DoFSize() const override
@@ -158,7 +161,8 @@ private:
 
 class RevoluteJoint : public Frame {
 public:
-    RevoluteJoint();
+    RevoluteJoint(double a, double alpha, double d, double theta,
+        double joint_limit_min, double joint_limit_max);
     ~RevoluteJoint();
 
     int DoFSize() const override
@@ -183,14 +187,20 @@ public:
         return J;
     }
 
-    void Oplus(const Eigen::VectorXd& update) override;
+    void Oplus(const Eigen::VectorXd& update) override
+    {
+        input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update(0)));
+    }
 
 private:
+    double a_, alpha_, d_, theta_;
+    double joint_limit_min_, joint_limit_max_, input_;
 };
 
 class PrismaticJoint : public Frame {
 public:
-    PrismaticJoint();
+    PrismaticJoint(double a, double alpha, double d, double theta,
+        double joint_limit_min, double joint_limit_max);
     ~PrismaticJoint();
 
     int DoFSize() const override
@@ -212,9 +222,14 @@ public:
         return J;
     }
 
-    void Oplus(const Eigen::VectorXd& update) override;
+    void Oplus(const Eigen::VectorXd& update) override
+    {
+        input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update(0)));
+    }
 
 private:
+    double a_, alpha_, d_, theta_;
+    double joint_limit_min_, joint_limit_max_, input_;
 };
 }
 
