@@ -27,6 +27,11 @@ int main()
     Eigen::MatrixXd Tww = Eigen::MatrixXd::Identity(4, 4);
     robot[0]->Update(Tww, false);
 
+    for (int i = 0, n = robot.size(); i < n; ++i) {
+        std::cout << robot[i]->Twf_ << std::endl;
+    }
+
+    Viewer::GetInstance().AddDrawFunction(std::bind(&knt::Frame::DebugDraw, robot[0]));
     Viewer::GetInstance().Run();
 
     return 0;

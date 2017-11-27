@@ -3,7 +3,9 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <exception>
+#include <pangolin/pangolin.h>
 #include <vector>
+
 namespace knt {
 
 enum {
@@ -109,7 +111,17 @@ public:
         need_update_Twf_ = false;
     }
 
-protected:
+    void DebugDraw() const
+    {
+        glPushMatrix();
+        glMultMatrixd(Tf_1_f_.data());
+        pangolin::glDrawAxis(30);
+        for (auto& it : next_frames_) {
+            it->DebugDraw();
+        }
+        glPopMatrix();
+    }
+
     Eigen::MatrixXd Twf_;
     Eigen::MatrixXd Tf_1_f_;
     std::vector<Frame*> next_frames_;
