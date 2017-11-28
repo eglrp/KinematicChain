@@ -3,6 +3,7 @@
 #include "viewer.h"
 #include <Eigen/Dense>
 #include <iostream>
+#include <thread>
 #include <vector>
 using namespace std;
 
@@ -32,7 +33,16 @@ int main()
     }
 
     Viewer::GetInstance().AddDrawFunction(std::bind(&knt::Frame::DebugDraw, robot[0]));
-    Viewer::GetInstance().Run();
 
+    std::thread viewer_thread(&Viewer::Run, &Viewer::GetInstance());
+
+    Eigen::VectorXd update(1);
+    update(0) = 0.00001;
+    while (1) {
+        for (int i = 0, n = robot.size(); i < n; ++i) {
+            robot[i]->Oplus(update);
+        }
+        robot[0]->Update(Tww, false);
+    }
     return 0;
 }

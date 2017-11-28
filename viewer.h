@@ -9,7 +9,7 @@ class Viewer {
 public:
     static Viewer& GetInstance();
     Viewer();
-    ~Viewer() {}
+    ~Viewer();
 
     void AddDrawFunction(const std::function<void(void)>& draw_funtion);
 
@@ -20,7 +20,7 @@ private:
     double width_ = 800;
     double f_ = 400;
     double z_near_ = 0.2;
-    double z_far_ = 1000;
+    double z_far_ = 10000;
 
     // model look at
     double ex_ = 100, ey_ = 500, ez_ = 200;

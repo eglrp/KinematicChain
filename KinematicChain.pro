@@ -22,3 +22,5 @@ unix: PKGCONFIG += opencv
 
 #pangolin
 LIBS += -lpangolin -lGL -lglut
+
+LIBS += -pthread

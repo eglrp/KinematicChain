@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <exception>
+#include <mutex>
 #include <pangolin/pangolin.h>
 #include <vector>
 
@@ -94,6 +95,7 @@ public:
 
     void Update(const Eigen::MatrixXd& Twf_1, bool update_flag)
     {
+        std::unique_lock<std::mutex> data_mutex_;
         if (update_flag) {
             Twf_ = Twf_1 * Tf_1_f_;
             for (auto& frame : next_frames_) {
@@ -113,6 +115,7 @@ public:
 
     void DebugDraw() const
     {
+        std::unique_lock<std::mutex> data_mutex_;
         glPushMatrix();
         glMultMatrixd(Tf_1_f_.data());
         pangolin::glDrawAxis(30);
@@ -126,6 +129,7 @@ public:
     Eigen::MatrixXd Tf_1_f_;
     std::vector<Frame*> next_frames_;
     bool need_update_Twf_;
+    mutable std::mutex data_mutex_;
 };
 
 class Frame6DoF : public Frame {
@@ -148,11 +152,13 @@ public:
 
     int DoFSize() const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         return NUM_DOF_FRAME6DOF;
     }
 
     Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, NUM_DOF_FRAME6DOF);
         J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 0);
         J.block<3, 1>(0, 1) = Twf_.block<3, 1>(0, 1);
@@ -167,6 +173,7 @@ public:
 
     Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, NUM_DOF_FRAME6DOF);
         J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 0);
         J.block<3, 1>(0, 1) = Twf_.block<3, 1>(0, 1);
@@ -185,6 +192,7 @@ public:
 
     void Oplus(const Eigen::VectorXd& update) override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::VectorXd rvec = update.tail(3);
         double th = rvec.norm();
         rvec /= th;
@@ -218,11 +226,13 @@ public:
 
     int DoFSize() const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         return NUM_DOF_REVOLUTE;
     }
 
     Eigen::MatrixXd Jij(const Eigen::VectorXd& tvec_wt) const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, NUM_DOF_REVOLUTE);
         Eigen::Vector3d r = tvec_wt - Twf_.block<3, 1>(0, 3);
         J = Twf_.block<3, 1>(0, 2).cross(r);
@@ -231,6 +241,7 @@ public:
 
     Eigen::MatrixXd Jij(const Eigen::MatrixXd& Twt) const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, NUM_DOF_REVOLUTE);
         Eigen::Vector3d r = Twt.block<3, 1>(0, 3) - Twf_.block<3, 1>(0, 3);
         J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 2).cross(r);
@@ -240,6 +251,7 @@ public:
 
     void Oplus(const Eigen::VectorXd& update) override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update(0)));
         UpdateTf_1_f();
         need_update_Twf_ = true;
@@ -298,11 +310,13 @@ public:
 
     int DoFSize() const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         return NUM_DOF_PRISMATIC;
     }
 
     Eigen::MatrixXd Jij(const Eigen::VectorXd&) const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, NUM_DOF_PRISMATIC);
         J = Twf_.block<3, 1>(0, 2);
         return J;
@@ -310,6 +324,7 @@ public:
 
     Eigen::MatrixXd Jij(const Eigen::MatrixXd&) const override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, NUM_DOF_PRISMATIC);
         J.block<3, 1>(0, 0) = Twf_.block<3, 1>(0, 2);
         return J;
@@ -317,6 +332,7 @@ public:
 
     void Oplus(const Eigen::VectorXd& update) override
     {
+        std::unique_lock<std::mutex> data_mutex_;
         input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update(0)));
         UpdateTf_1_f();
         need_update_Twf_ = true;
