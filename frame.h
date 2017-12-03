@@ -204,14 +204,28 @@ public:
     }
 
     // g2o
-    double setToOriginImpl()
+    Eigen::Matrix4d setToOriginImpl()
     {
         std::unique_lock<std::mutex> data_mutex_;
+        Tf_1_f_ = Eigen::MatrixXd::Identity(4, 4);
+        need_update_Twf_ = true;
+        return Tf_1_f_;
     }
 
-    double oplusImpl(double* update)
+    Eigen::Matrix4d oplusImpl(const double* update)
     {
         std::unique_lock<std::mutex> data_mutex_;
+        Eigen::Vector3d rvec;
+        rvec << update[0], update[1], update[2];
+        double th = rvec.norm();
+        rvec /= th;
+
+        Eigen::Matrix4d Tffp = Eigen::MatrixXd::Identity(4, 4);
+        Tffp.block<3, 3>(0, 0) = Eigen::AngleAxisd(th, rvec).toRotationMatrix();
+        Tffp.block<3, 1>(0, 3) << update[3], update[4], update[5];
+        Tf_1_f_ = Tf_1_f_.eval() * Tffp;
+        need_update_Twf_ = true;
+        return Tf_1_f_;
     }
 
 private:

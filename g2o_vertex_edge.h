@@ -13,23 +13,23 @@
 
 namespace knt {
 
-class Frame6DoFVertex : public g2o::BaseVertex<6, Eigen::Matrix<double, 6, 1>> {
+class Frame6DoFVertex : public g2o::BaseVertex<6, Eigen::Matrix4d> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Frame6DoFVertex(Frame6DoF* frame)
-        : g2o::BaseVertex<6, Eigen::Matrix<double, 6, 1>>()
+        : g2o::BaseVertex<6, Eigen::Matrix4d>()
         , frame_(frame)
     {
     }
 
     virtual void setToOriginImpl()
     {
-        //        _estimate = joint_->setToOriginImpl();
+        _estimate = frame_->setToOriginImpl();
     }
 
     virtual void oplusImpl(const double* update)
     {
-        //        _estimate = joint_->oplusImpl(update[0]);
+        _estimate = frame_->oplusImpl(update);
     }
 
     virtual bool read(std::istream& in) {}
