@@ -200,6 +200,18 @@ public:
         Tffp.block<3, 3>(0, 0) = Eigen::AngleAxisd(th, rvec).toRotationMatrix();
         Tffp.block<3, 1>(0, 3) = update.head(3);
         Tf_1_f_ = Tf_1_f_.eval() * Tffp;
+        need_update_Twf_ = true;
+    }
+
+    // g2o
+    double setToOriginImpl()
+    {
+        std::unique_lock<std::mutex> data_mutex_;
+    }
+
+    double oplusImpl(double* update)
+    {
+        std::unique_lock<std::mutex> data_mutex_;
     }
 
 private:
@@ -255,6 +267,25 @@ public:
         input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update(0)));
         UpdateTf_1_f();
         need_update_Twf_ = true;
+    }
+
+    // g2o
+    double setToOriginImpl()
+    {
+        std::unique_lock<std::mutex> data_mutex_;
+        input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, static_cast<double>(0)));
+        UpdateTf_1_f();
+        need_update_Twf_ = true;
+        return input_;
+    }
+
+    double oplusImpl(double update)
+    {
+        std::unique_lock<std::mutex> data_mutex_;
+        input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update));
+        UpdateTf_1_f();
+        need_update_Twf_ = true;
+        return input_;
     }
 
 private:
@@ -336,6 +367,25 @@ public:
         input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update(0)));
         UpdateTf_1_f();
         need_update_Twf_ = true;
+    }
+
+    // g2o
+    double setToOriginImpl()
+    {
+        std::unique_lock<std::mutex> data_mutex_;
+        input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, static_cast<double>(0)));
+        UpdateTf_1_f();
+        need_update_Twf_ = true;
+        return input_;
+    }
+
+    double oplusImpl(double update)
+    {
+        std::unique_lock<std::mutex> data_mutex_;
+        input_ = std::min(joint_limit_max_, std::max(joint_limit_min_, input_ + update));
+        UpdateTf_1_f();
+        need_update_Twf_ = true;
+        return input_;
     }
 
 private:
