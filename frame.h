@@ -63,6 +63,7 @@ public:
         Tf_1_f_ = Eigen::MatrixXd::Identity(4, 4);
         need_update_Twf_ = true;
     }
+
     Frame(const Eigen::MatrixXd& Tf_1_f)
     {
         if (CheckSE3(Tf_1_f))
@@ -71,6 +72,11 @@ public:
         need_update_Twf_ = true;
     }
     virtual ~Frame() {}
+
+    void SetParentFrame(Frame* parent)
+    {
+        parent_ = parent;
+    }
 
     void AddNextFrame(Frame* next)
     {
@@ -127,6 +133,7 @@ public:
 
     Eigen::MatrixXd Twf_;
     Eigen::MatrixXd Tf_1_f_;
+    Frame* parent_ = nullptr;
     std::vector<Frame*> next_frames_;
     bool need_update_Twf_;
     mutable std::mutex data_mutex_;

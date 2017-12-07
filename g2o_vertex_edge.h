@@ -90,5 +90,20 @@ public:
 private:
     PrismaticJoint* joint_;
 };
+
+class RevoluteEdge6 : public g2o::BaseUnaryEdge<6, Eigen::Matrix4d, RevoluteVertex> {
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    RevoluteEdge6(Frame* frame)
+        : frame_(frame)
+    {
+    }
+
+private:
+    Frame* frame_;
+};
+
+class RevoluteEdge3 : public g2o::BaseUnaryEdge<3, Eigen::VectorXd, RevoluteVertex> {
+};
 }
 #endif // G2O_VERTEX_EDGE_H

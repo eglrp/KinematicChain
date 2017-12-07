@@ -24,6 +24,7 @@ int main()
 
     for (int i = 0, n = robot.size() - 1; i < n; ++i) {
         robot[i]->AddNextFrame(robot[i + 1]);
+        robot[i + 1]->SetParentFrame(robot[i]);
     }
     Eigen::MatrixXd Tww = Eigen::MatrixXd::Identity(4, 4);
     robot[0]->Update(Tww, false);
