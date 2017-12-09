@@ -30,7 +30,7 @@ int main()
     robot[0]->Update(Tww, false);
 
     for (int i = 0, n = robot.size(); i < n; ++i) {
-        std::cout << robot[i]->Twf_ << std::endl;
+        std::cout << robot[i]->GetTwf() << std::endl;
     }
 
     Viewer::GetInstance().AddDrawFunction(std::bind(&knt::Frame::DebugDraw, robot[0]));

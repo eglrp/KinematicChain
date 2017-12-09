@@ -13,32 +13,6 @@
 
 namespace knt {
 
-class Frame6DoFVertex : public g2o::BaseVertex<6, Eigen::Matrix4d> {
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Frame6DoFVertex(Frame6DoF* frame)
-        : g2o::BaseVertex<6, Eigen::Matrix4d>()
-        , frame_(frame)
-    {
-    }
-
-    virtual void setToOriginImpl()
-    {
-        _estimate = frame_->setToOriginImpl();
-    }
-
-    virtual void oplusImpl(const double* update)
-    {
-        _estimate = frame_->oplusImpl(update);
-    }
-
-    virtual bool read(std::istream& in) {}
-    virtual bool write(std::ostream& out) const {}
-
-private:
-    Frame6DoF* frame_;
-};
-
 class RevoluteVertex : public g2o::BaseVertex<1, double> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -61,49 +35,45 @@ public:
     virtual bool read(std::istream& in) {}
     virtual bool write(std::ostream& out) const {}
 
+    RevoluteJoint* GetRevoluteJoint() const
+    {
+        return joint_;
+    }
+
 private:
     RevoluteJoint* joint_;
 };
 
-class PrismaticVertex : public g2o::BaseVertex<1, double> {
+//                                         output dimension, target dimension, corredpondence vertex
+class RevoluteEdge3 : public g2o::BaseUnaryEdge<3, Eigen::Vector3d, RevoluteVertex> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    PrismaticVertex(PrismaticJoint* joint)
-        : g2o::BaseVertex<1, double>()
-        , joint_(joint)
+    RevoluteEdge3(Frame* frame, Frame* root)
+        : frame_(frame)
+        , root_(root)
     {
     }
+    ~RevoluteEdge3() {}
 
-    virtual void setToOriginImpl()
+    virtual void computeError()
     {
-        _estimate = joint_->setToOriginImpl();
+        root_->Update(Eigen::Matrix4d::Identity(), false);
     }
 
-    virtual void oplusImpl(const double* update)
+    virtual void linearizeOplus()
     {
-        _estimate = joint_->oplusImpl(update[0]);
+        if (level() == 1) {
+            return;
+        }
+        return;
     }
 
     virtual bool read(std::istream& in) {}
     virtual bool write(std::ostream& out) const {}
 
 private:
-    PrismaticJoint* joint_;
-};
-
-class RevoluteEdge6 : public g2o::BaseUnaryEdge<6, Eigen::Matrix4d, RevoluteVertex> {
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    RevoluteEdge6(Frame* frame)
-        : frame_(frame)
-    {
-    }
-
-private:
     Frame* frame_;
-};
-
-class RevoluteEdge3 : public g2o::BaseUnaryEdge<3, Eigen::VectorXd, RevoluteVertex> {
+    Frame* root_;
 };
 }
 #endif // G2O_VERTEX_EDGE_H
